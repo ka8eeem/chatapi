@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0.30-debian
+    restart: always
+    volumes:
+      - ./volumes/mysql-data:/var/lib/mysql
+  redis:
+    image: redis:6.2.7-alpine
+    restart: always
+    volumes:
+      - ./volumes/redis-data:/data
+    command: redis-server --appendonly yes
+
+  rabbitmq:
+      image: rabbitmq:3.9-alpine
+      restart: always
+      volumes:
+        - ./volumes/rabbitmq:/var/lib/rabbitmq
+  elastic:
+      image: elasticsearch:5.4.0-alpine
+      restart: always
+      ports:
+        - "9200:9200"
+      volumes:
+        - ./volumes/elastic:/usr/share/elasticsearch/data
+  web:
+    build: .
+    restart: always
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    links:
+      - mysql
+      - redis
+      - elastic
+      - rabbitmq
+    environment:
+      - MYSQL_HOST=mysql
+      - REDIS_HOST=redis
+      - RABBITMQ_HOST=rabbitmq
+      - ELASTIC_HOST=elastic
