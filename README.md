@@ -22,4 +22,70 @@ as its my first time using RoR i started with a quick [crash course](https://app
 1) initialized the application boilerplate using `rails new chatApp --api -d mysql`
 2) generate migration and models using `rails generate model Application`
 
+one of the biggest challenges was wrapping the stack logic together and make use of rabbitmq, redis and elastic search and connect it to the application request lifecycle
 
+1) the application will receive request through a route
+2) the controller will validate the params
+3) controller will pass the validated params to rabbitmq publisher
+4) rabbitmq consumer will listen to the channel and will do the creation in the database
+5) as we need to make use of autoincrement for chat_number per application and message_number per chat, redis hint was enlightening
+6) we will use redios `INCR` famous function to store and increment the keys of chat_number per application and message_number per chat
+7) i used routing convinent alittle different than the one descriped in the challenge ex: using ?app_token={token}&chat_number={number} as i found it more decoupled and easier to scale than the nested routes of /application/{token}/chat/{number}
+8) finally docker compose file was a mess configuring all the netowrk of the different services together xD
+
+## Routes schema
+
+#### New Application
+
+```sh
+$ curl -X POST \
+    http://localhost:3000/api/v1/applications \
+    -H 'cache-control: no-cache' \
+    -H 'content-type: application/json' \
+    -d '{
+  	"name":"app1",
+  }'
+```
+
+### New Chat
+
+```sh
+$ curl -X POST \
+    http://localhost:3000/api/v1/chats \
+    -H 'cache-control: no-cache' \
+    -H 'content-type: application/json' \
+    -d '{
+  	"app_token":"{app1_token}",
+    "chat_users":"Kareem, Ahmed" {descriptive field}
+  }'
+```
+
+### New Message
+
+```sh
+$ curl -X POST \
+    http://localhost:3000/api/v1/messages \
+    -H 'cache-control: no-cache' \
+    -H 'content-type: application/json' \
+    -d '{
+  	"app_token":"{app1_token}",
+    "chat_number":"{chat_number}",
+    "message_body":"test message"
+  }'
+```
+
+### Search Elastic
+
+```sh
+$ curl -X POST \
+    http://localhost:9200/chat_app/_search \
+    -H 'cache-control: no-cache' \
+    -H 'content-type: application/json' \
+    -d '{                  
+      "query": {
+          "match": {
+              "messages": "get message partially or fully"
+          }
+      }
+  }'
+```
