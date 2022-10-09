@@ -2,10 +2,10 @@ class RabbitConnection
   include Singleton
   attr_reader :connection
   def initialize
-    @connection = Bunny.new("amqp://guest:guest@localhost:5672")
+    @connection = Bunny.new("amqp://guest:guest@#{ENV['RABBITMQ_HOST']}:5672")
     @connection.start
 
-    Sneakers.configure(:amqp => "amqp://guest:guest@localhost:5672")
+    Sneakers.configure(:amqp => "amqp://guest:guest@#{ENV['RABBITMQ_HOST']}:5672")
   end
   def channel
     @channel ||= ConnectionPool.new do
