@@ -1,4 +1,4 @@
-version: "3.9"
+version: "3"
 
 services:
   mysql:
@@ -21,6 +21,8 @@ services:
   rabbitmq:
       image: rabbitmq:3.9-alpine
       restart: always
+      ports:
+        - "5672:5672"
       volumes:
         - ./volumes/rabbitmq:/var/lib/rabbitmq
 
@@ -30,6 +32,10 @@ services:
       restart: always
       ports:
         - "9200:9200"
+      environment:
+        - cluster.name=docker-cluster
+        - bootstrap.memory_lock=true
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       volumes:
         - ./volumes/elastic:/usr/share/elasticsearch/data
 
@@ -43,7 +49,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - "3000:3000"
+      - "4000:3000"
     links:
       - mysql
       - redis
@@ -56,3 +62,24 @@ services:
       - RABBITMQ_HOST=rabbitmq
       - ELASTIC_HOST=elasticsearch
       - MYSQL_ROOT_PASSWORD=secret-pw
+
+  services:
+    platform: linux/x86_64
+    build: .
+    command: sh -c "rake sneakers:run"
+    restart: always
+    volumes:
+      - .:/app
+    links:
+      - mysql
+      - redis
+      - elasticsearch
+      - rabbitmq
+    depends_on:
+      - app
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_PASSWORD: secret-pw
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      ELASTIC_HOST: elasticsearch
