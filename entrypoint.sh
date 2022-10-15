@@ -1,2 +1,3 @@
 rake db:migrate
-rake es:build_index
+
+#rake es:build_index
