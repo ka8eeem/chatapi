@@ -4,8 +4,6 @@ class RabbitConnection
   def initialize
     @connection = Bunny.new("amqp://guest:guest@#{ENV['RABBITMQ_HOST']}")
     @connection.start
-
-    Sneakers.configure(:amqp => "amqp://guest:guest@#{ENV['RABBITMQ_HOST']}")
   end
   def channel
     @channel ||= ConnectionPool.new do
